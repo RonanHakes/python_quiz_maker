@@ -1,23 +1,9 @@
 import csv
 import os
 import time
+import string
 
 question_list = [[]]
-
-# TODO: MAKE THIS WORK!
-# def import_csv():
-#     print("Please enter the directory of the csv file you wish to import: ")
-#     csvdir = input()
-#     new_name = csvdir.split("\\")[-1]
-#
-#     with open(csvdir, "r") as csv_file:
-#         csv_reader = csv.reader(csv_file)
-#
-#         with open("Quizzes\\" + new_name, "w") as new_file:
-#             csv_writer = csv.writer(new_file)
-#
-#             for line in csv_reader:
-#                 csv_writer.writerow(line)
 
 
 def testing():
@@ -51,8 +37,8 @@ def testing():
 
 def open_quiz():
     print("Here are the quizzes you currently have")
-    currentWorkDir = os.getcwd()
-    quizzes_in_quiz_folder = os.listdir(currentWorkDir + "\\Quizzes")
+    current_work_dir = os.getcwd()
+    quizzes_in_quiz_folder = os.listdir(current_work_dir + "\\Quizzes")
     quizzes_list = []
     for quiz in quizzes_in_quiz_folder:
         current_quiz = quiz.split(".")[0]
@@ -107,17 +93,16 @@ def run_quiz(quiz_name):
 
 def create_quiz():
     global question_list
+    question_list = [[]]
     print("What would you like to name your new quiz?")
     quiz_name = input()
     user_is_finished = False
-    question_list = [[]]
     while not user_is_finished:
         question_list.append(create_question())
         user_is_finished = is_user_finished()
 
     current_work_dir = os.getcwd()
-    quiz_folder = os.listdir(current_work_dir + "/Quizzes")
-    with open(str(quiz_folder) + "/" + quiz_name + ".csv", "w", newline="") as new_quiz:
+    with open(current_work_dir + "/Quizzes/" + quiz_name + ".csv", "w", newline="") as new_quiz:
         writer = csv.writer(new_quiz)
         writer.writerow(["question", "answer_1", "answer_2", "answer_3", "answer_4", "index_of_correct_answer"])
         writer.writerows(question_list)
@@ -130,30 +115,48 @@ def is_user_finished():
     # if the user wishes to create a new question and a value of true if they do not.
     global question_list
     user_choice = input(
-        "\nWould you like to create another question? Enter Yes if you would, enter No if you are finished, and enter Edit if you want to Edit one of your questions.\n")
-    user_is_finished_method_return = False
+        "\nWould you like to create another question? Enter Yes if you would, enter No if you are finished, "
+        "and enter Edit if you want to Edit one of your questions.\n")
     if str.lower(user_choice) == "yes":
-        user_is_finished_method_return = False
+        return False
     elif str.lower(user_choice) == "no":
-        user_is_finished_method_return = True
+        return True
     elif str.lower(user_choice) == "edit":
-        print("Which question would you like to edit?")
+        print("Which question would you like to edit? To go back, input 0")
         counter = 0
         for question in question_list:
+            if counter <= 0:
+                print("(" + str(counter) + ")" + "[Go back]")
+            else:
+                print("(" + str(counter) + ")" + str(question))
             counter += 1
-            print("(" + str(counter) + ")" + str(question))
         print("Select the number corresponding to the question you want to edit (make sure to enter a number)")
+
+        # Getting the user's choice and handling incorrect inputs
         user_choice = input()
-        question_list.append(edit_question(question_list[int(user_choice) - 1]))
+        choice_index = int(user_choice)
+        if user_choice == "0":
+            is_user_finished()
+        elif user_choice not in string.digits:
+            print("Please enter a number.")
+        elif 0 >= choice_index >= len(question_list):
+            print("Please enter one of the numbers provided")
+
+        replace_element_in_list(question_list[choice_index], choice_index,
+                                edit_question(question_list[choice_index]))
+        is_user_finished()
     else:
         print("Please enter 'Yes', 'No', or 'Edit'\n")
         is_user_finished()
 
-    return user_is_finished_method_return
+
+def replace_element_in_list(target_list, index_to_be_replaced, new_element):
+    target_list[index_to_be_replaced] = new_element
+    return list
 
 
 def create_question():
-    question = [input("What the question you would like to ask?\n"), input("What is the first option?\n"),
+    question = [input("What is the question you would like to ask?\n"), input("What is the first option?\n"),
                 input("What is the second option?\n"), input("What is the third option?\n"),
                 input("What is the fourth option?\n")]
     index_of_correct_answer = input("Which answer is the correct one (please input a number between 1-4 inclusive)\n")
@@ -165,7 +168,7 @@ def create_question():
     print("Second option: " + question[2])
     print("Third option: " + question[3])
     print("Fourth option: " + question[4])
-    print("And the correct option is option " + str(int(question[5]) + 1))
+    print("And the correct option is option: " + str(int(question[5]) + 1))
     return question
 
 
@@ -177,7 +180,7 @@ def edit_question(question):  # This function allows for the editing of single q
     print("(3)Second option: " + question[2])
     print("(4)Third option: " + question[3])
     print("(5)Fourth option: " + question[4])
-    print("(6)Correct option" + question[5])
+    print("(6)Correct option " + question[5])
     print("Please input the number corresponding to the option you wish to edit")
     user_choice = input()
     if user_choice == "1":
@@ -194,6 +197,7 @@ def edit_question(question):  # This function allows for the editing of single q
         question[5] = input("What would you like this to say?")
     return question
 
+
 def validate_index_of_correct_answer(index_of_correct_answer):
     if int(index_of_correct_answer) >= 1 or int(index_of_correct_answer) <= 4:
         return True
@@ -202,12 +206,12 @@ def validate_index_of_correct_answer(index_of_correct_answer):
 
 
 def menu():
-    print("Welcome to the Quizzinator application!\nOptions:\n(1)Start a quiz\n(2)Create a quiz\n(3)Import a quiz\n"
-          "(4)Exit the program")
+    print("Welcome to the Quizzinator application!\nOptions:\n(1)Start a quiz\n(2)Create a quiz\n"
+          "(3)Exit the program")
     user_choice = input()
 
     if user_choice == "1":
-        print("starting quiz")
+        print("Starting quiz")
         # Make this start the quiz
         open_quiz()
     elif user_choice == "2":
@@ -215,9 +219,6 @@ def menu():
         # make this open the quiz creator
         create_quiz()
     elif user_choice == "3":
-        print("Opening the quiz importer")
-        # import_csv() (It don't work lol)
-    elif user_choice == "4":
         print("Exiting the program. Goodbye.")
     elif user_choice == "debug":
         print("Time for testing!")
